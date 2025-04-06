@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zotero RAG Demo</title>
+    <link rel="stylesheet" href="../components/styles.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Markdown-it (用于渲染markdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@12.0.6/dist/markdown-it.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航 -->
+        <nav class="bg-blue-600 text-white shadow-md">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-book-open text-xl"></i>
+                    <h1 class="text-xl font-bold">Zotero RAG Demo</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="status-btn" class="px-3 py-1 rounded bg-blue-700 hover:bg-blue-800 transition">
+                        <i class="fas fa-database mr-1"></i>知识库状态
+                    </button>
+                    <button id="settings-btn" class="px-3 py-1 rounded bg-blue-700 hover:bg-blue-800 transition">
+                        <i class="fas fa-cog mr-1"></i>设置
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容区 -->
+        <div class="flex-grow container mx-auto px-4 py-6 flex flex-col">
+            <!-- 对话区域 -->
+            <div id="chat-container" class="flex-grow mb-4 overflow-y-auto bg-white rounded-lg shadow-md p-4 min-h-[400px] max-h-[70vh]">
+                <!-- 欢迎消息 -->
+                <div class="message assistant-message mb-4">
+                    <div class="message-content rounded-lg p-3 bg-blue-50">
+                        <p>👋 欢迎使用基于Zotero文献库的RAG系统！我可以帮您查找和回答与您知识库相关的问题。请输入您的问题。</p>
+                    </div>
+                </div>
+                <!-- 对话消息将动态添加到这里 -->
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="flex items-start space-x-2">
+                <div class="relative flex-grow">
+                    <textarea id="user-input" rows="2" placeholder="输入您的问题..." 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+                    <button id="clear-btn" title="清除对话" class="absolute right-3 top-2 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <button id="send-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
+                    <i class="fas fa-paper-plane mr-1"></i>发送
+                </button>
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <footer class="bg-gray-100 border-t border-gray-200 py-4">
+            <div class="container mx-auto px-4 text-center text-gray-600 text-sm">
+                <p>Zotero RAG Demo - 基于检索增强生成的学术文献助手</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 知识库状态模态框 -->
+    <div id="status-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">知识库状态</h3>
+                <button class="modal-close text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-3" id="kb-status-content">
+                <p class="flex justify-between"><span>文档数量:</span> <span id="document-count">--</span></p>
+                <p class="flex justify-between"><span>文本块数量:</span> <span id="chunk-count">--</span></p>
+                <p class="flex justify-between"><span>嵌入模型:</span> <span id="embedding-model">--</span></p>
+                <p class="flex justify-between"><span>最后更新时间:</span> <span id="last-updated">--</span></p>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button class="modal-close px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">设置</h3>
+                <button class="modal-close text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="settings-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="max-sources">最大引用源数量</label>
+                    <input type="number" id="max-sources" name="max-sources" min="1" max="10" value="5" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="similarity-threshold">相似度阈值</label>
+                    <input type="range" id="similarity-threshold" name="similarity-threshold" min="0" max="1" step="0.05" value="0.6" 
+                           class="w-full">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>更多结果</span>
+                        <span id="threshold-value">0.6</span>
+                        <span>更相关结果</span>
+                    </div>
+                </div>
+            </form>
+            <div class="mt-6 flex justify-end space-x-2">
+                <button class="modal-close px-4 py-2 border border-gray-300 rounded hover:bg-gray-100">取消</button>
+                <button id="save-settings" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主脚本 -->
+    <script src="../components/chat.js"></script>
+</body>
+</html> 

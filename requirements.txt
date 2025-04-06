@@ -1,0 +1,15 @@
+fastapi>=0.95.2
+uvicorn==0.21.1
+pydantic==1.10.7
+python-dotenv==1.0.0
+langchain==0.0.267
+langchain-community>=0.0.1
+chromadb==0.4.15
+sentence-transformers==2.2.2
+pypdf==3.15.1
+bibtexparser==1.4.0
+pyzotero==1.5.5
+tqdm==4.65.0
+pytest==7.3.1
+jupyter==1.0.0
+ipywidgets==8.0.6 
