@@ -33,43 +33,65 @@
         </nav>
 
         <!-- 主内容区 -->
-        <div class="flex-grow container mx-auto px-4 py-6 flex flex-col">
-            <!-- 对话区域 -->
-            <div id="chat-container" class="flex-grow mb-4 overflow-y-auto bg-white rounded-lg shadow-md p-4 min-h-[400px] max-h-[70vh]">
-                <!-- 欢迎消息 -->
-                <div class="message assistant-message mb-4">
-                    <div class="message-content rounded-lg p-3 bg-blue-50">
-                        <p>👋 欢迎使用Zotero文献助手！</p>
-                        <p class="mt-2">我可以帮您查找和回答与您知识库相关的问题，也可以作为普通助手与您交流。</p>
-                        <p class="mt-2">您可以使用右下角的开关在<strong>知识库查询模式</strong>和<strong>纯对话模式</strong>之间切换：</p>
-                        <ul class="list-disc ml-6 mt-1">
-                            <li><strong>知识库查询模式</strong>：我将从您的Zotero文献库中检索相关内容回答问题</li>
-                            <li><strong>纯对话模式</strong>：我将作为普通AI助手与您交流，不查询知识库</li>
-                        </ul>
+        <div class="flex-grow container mx-auto px-4 py-6 flex">
+            <!-- 侧边栏 - 历史对话 -->
+            <div id="sidebar" class="w-64 mr-4 flex flex-col bg-white shadow-md rounded-lg overflow-hidden">
+                <div class="p-3 bg-blue-600 text-white flex justify-between items-center">
+                    <h2 class="font-medium">对话历史</h2>
+                    <button id="new-chat-btn" class="text-white hover:bg-blue-700 p-1 rounded" title="新建对话">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="p-2 flex-grow overflow-y-auto max-h-[calc(100vh-180px)]">
+                    <div id="conversations-list" class="space-y-1">
+                        <!-- 对话列表将在这里动态添加 -->
                     </div>
                 </div>
-                <!-- 对话消息将动态添加到这里 -->
+                <div class="p-2 border-t border-gray-200">
+                    <div class="text-xs text-gray-500 mb-1">当前对话</div>
+                    <div id="current-conversation-name" class="text-sm font-medium truncate">新对话</div>
+                </div>
             </div>
 
-            <!-- 输入区域 -->
-            <div class="flex items-start space-x-2">
-                <div class="relative flex-grow">
-                    <textarea id="user-input" rows="2" placeholder="输入您的问题..." 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
-                    <button id="clear-btn" title="清除对话" class="absolute right-3 top-2 text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
+            <!-- 主对话区域 -->
+            <div class="flex-grow flex flex-col">
+                <!-- 对话区域 -->
+                <div id="chat-container" class="flex-grow mb-4 overflow-y-auto bg-white rounded-lg shadow-md p-4 min-h-[400px] max-h-[70vh]">
+                    <!-- 欢迎消息 -->
+                    <div class="message assistant-message mb-4">
+                        <div class="message-content rounded-lg p-3 bg-blue-50">
+                            <p>👋 欢迎使用Zotero文献助手！</p>
+                            <p class="mt-2">我可以帮您查找和回答与您知识库相关的问题，也可以作为普通助手与您交流。</p>
+                            <p class="mt-2">您可以使用右下角的开关在<strong>知识库查询模式</strong>和<strong>纯对话模式</strong>之间切换：</p>
+                            <ul class="list-disc ml-6 mt-1">
+                                <li><strong>知识库查询模式</strong>：我将从您的Zotero文献库中检索相关内容回答问题</li>
+                                <li><strong>纯对话模式</strong>：我将作为普通AI助手与您交流，不查询知识库</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- 对话消息将动态添加到这里 -->
                 </div>
-                <div class="flex flex-col space-y-2">
-                    <button id="send-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-                        <i class="fas fa-paper-plane mr-1"></i>发送
-                    </button>
-                    <div class="flex items-center justify-center border border-gray-300 rounded-lg px-2 py-1 bg-white">
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="mode-toggle" class="sr-only peer" checked>
-                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                            <span class="ml-2 text-xs text-gray-700 whitespace-nowrap" id="mode-label">使用知识库</span>
-                        </label>
+
+                <!-- 输入区域 -->
+                <div class="flex items-start space-x-2">
+                    <div class="relative flex-grow">
+                        <textarea id="user-input" rows="2" placeholder="输入您的问题..." 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+                        <button id="clear-btn" title="清除当前对话内容" class="absolute right-3 top-2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col space-y-2">
+                        <button id="send-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
+                            <i class="fas fa-paper-plane mr-1"></i>发送
+                        </button>
+                        <div class="flex items-center justify-center border border-gray-300 rounded-lg px-2 py-1 bg-white">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="mode-toggle" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                <span class="ml-2 text-xs text-gray-700 whitespace-nowrap" id="mode-label">使用知识库</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -133,6 +155,27 @@
             <div class="mt-6 flex justify-end space-x-2">
                 <button class="modal-close px-4 py-2 border border-gray-300 rounded hover:bg-gray-100">取消</button>
                 <button id="save-settings" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 对话重命名模态框 -->
+    <div id="rename-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">重命名对话</h3>
+                <button class="modal-close text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="conversation-name">对话名称</label>
+                <input type="text" id="conversation-name" name="conversation-name" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button class="modal-close px-4 py-2 border border-gray-300 rounded hover:bg-gray-100">取消</button>
+                <button id="save-conversation-name" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">保存</button>
             </div>
         </div>
     </div>
