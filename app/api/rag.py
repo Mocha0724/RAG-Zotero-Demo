@@ -420,13 +420,30 @@ class RAGEngine:
             return "知识库为空，请先导入数据。", []
         
         try:
-            # 执行相似性搜索
+            # 检测查询是否包含中文字符
+            contains_chinese = any('\u4e00' <= char <= '\u9fff' for char in query)
+            translated_query = query
+            
+            # 如果包含中文字符，尝试翻译为英文
+            if contains_chinese:
+                try:
+                    # 使用自定义嵌入模型进行简单翻译
+                    translated_query = self._translate_chinese_to_english(query)
+                    print(f"已将中文查询翻译为英文: '{query}' -> '{translated_query}'")
+                except Exception as e:
+                    print(f"翻译查询时出错: {e}")
+                    # 如果翻译失败，继续使用原始查询
+                    print("使用原始查询继续进行检索")
+            
+            # 使用翻译后的查询进行检索
             results = self.vectorstore.similarity_search_with_relevance_scores(
-                query, 
+                translated_query, 
                 k=max_sources * 3
             )
             
             print(f"\n=== 检索查询: {query} ===")
+            if contains_chinese:
+                print(f"翻译后的检索查询: {translated_query}")
             print(f"检索到 {len(results)} 个初始结果")
             
             # 过滤相关性低的结果
@@ -472,9 +489,10 @@ class RAGEngine:
                     authors=authors,
                     year=year,
                     publication=publication,
-                    relevance=round(score * 100, 2),
+                    score=round(score * 100, 2),
                     doi=doi,
-                    url=url
+                    url=url,
+                    text=doc.page_content
                 )
                 sources.append(source)
             
@@ -487,6 +505,117 @@ class RAGEngine:
         except Exception as e:
             print(f"检索错误: {e}")
             return f"检索过程中出错: {str(e)}", []
+            
+    def _translate_chinese_to_english(self, chinese_text: str) -> str:
+        """
+        将中文文本翻译为英文
+        
+        Args:
+            chinese_text: 中文文本
+            
+        Returns:
+            翻译后的英文文本
+        """
+        try:
+            # 使用DeepSeekLLM的翻译能力
+            from .llm import DeepSeekLLM
+            
+            # 初始化LLM
+            llm = DeepSeekLLM()
+            
+            # 构建翻译提示
+            prompt = f"""请将以下中文文本翻译成英文，只返回翻译结果，不要添加任何解释或多余内容。请保持学术性和专业性:
+            
+{chinese_text}
+
+Translation:"""
+            
+            # 生成翻译
+            translation = llm.generate_answer(
+                query=prompt,
+                context=None,
+                history=[],
+                mode="chat"
+            )
+            
+            # 清理翻译结果(移除可能的前缀和多余字符)
+            translation = translation.strip()
+            translation = translation.replace("Translation:", "").strip()
+            if translation.startswith('"') and translation.endswith('"'):
+                translation = translation[1:-1]
+                
+            return translation
+        except Exception as e:
+            print(f"翻译时出错: {e}")
+            # 如果DeepSeekLLM翻译失败，使用简易备选翻译
+            return self._simple_chinese_to_english_translation(chinese_text)
+    
+    def _simple_chinese_to_english_translation(self, chinese_text: str) -> str:
+        """
+        简易的中英文翻译字典（仅作为备选方案）
+        
+        Args:
+            chinese_text: 中文文本
+            
+        Returns:
+            翻译后的英文文本（基于简单字典替换）
+        """
+        # 基本的术语字典 (示例，实际使用时应更全面)
+        translation_dict = {
+            "研究": "research",
+            "分析": "analysis",
+            "方法": "method",
+            "数据": "data",
+            "结果": "results",
+            "结论": "conclusion",
+            "模型": "model",
+            "系统": "system",
+            "技术": "technology",
+            "算法": "algorithm",
+            "学习": "learning",
+            "智能": "intelligence",
+            "人工智能": "artificial intelligence",
+            "机器学习": "machine learning",
+            "深度学习": "deep learning",
+            "神经网络": "neural network",
+            "自然语言处理": "natural language processing",
+            "计算机视觉": "computer vision",
+            "大数据": "big data",
+            "云计算": "cloud computing",
+            "物联网": "Internet of Things",
+            "区块链": "blockchain",
+            "安全": "security",
+            "隐私": "privacy",
+            "效率": "efficiency",
+            "性能": "performance",
+            "优化": "optimization",
+            "实现": "implementation",
+            "框架": "framework",
+            "应用": "application",
+            "发展": "development",
+            "趋势": "trend",
+            "挑战": "challenge",
+            "问题": "problem",
+            "解决方案": "solution",
+            "比较": "comparison",
+            "评估": "evaluation",
+            "测试": "testing",
+            "验证": "verification",
+            "分类": "classification",
+            "预测": "prediction",
+            "识别": "recognition",
+            "检测": "detection",
+            "生成": "generation",
+            "综述": "review",
+            "概述": "overview"
+        }
+        
+        # 简单的词汇替换
+        translated_text = chinese_text
+        for cn_word, en_word in translation_dict.items():
+            translated_text = translated_text.replace(cn_word, en_word)
+            
+        return translated_text
 
 # 测试代码
 if __name__ == "__main__":
@@ -501,6 +630,6 @@ if __name__ == "__main__":
             context, sources = engine.retrieve("测试查询")
             print(f"找到 {len(sources)} 个结果")
             for i, source in enumerate(sources):
-                print(f"结果 {i+1}: {source.title} (相关度: {source.relevance:.2f})")
+                print(f"结果 {i+1}: {source.title} (相关度: {source.score:.2f})")
     except Exception as e:
         print(f"测试过程中出错: {e}") 
