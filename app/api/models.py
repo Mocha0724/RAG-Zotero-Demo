@@ -19,6 +19,7 @@ class ChatRequest(BaseModel):
     history: List[Message] = Field(default_factory=list, description="历史对话记录")
     max_sources: int = Field(default=5, description="最大引用源数量")
     similarity_threshold: float = Field(default=0.6, description="相似度阈值，用于过滤不相关内容")
+    mode: str = Field(default="rag", description="对话模式，'rag'使用知识库检索，'chat'为纯对话模式")
 
 class Source(BaseModel):
     """引用源模型"""

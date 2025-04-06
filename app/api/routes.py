@@ -74,19 +74,38 @@ async def chat(
         # 获取查询和历史
         query = request.query
         history = [{"role": msg.role, "content": msg.content} for msg in request.history]
+        mode = request.mode
         
-        # 从知识库中检索相关文档
-        context, sources = rag_engine.retrieve(
-            query=query,
-            max_sources=request.max_sources,
-            similarity_threshold=0.2  # 将阈值从默认的0.6降低到0.2，允许返回更多相关性较低的结果
-        )
-        
-        # 生成回答
-        answer = llm.generate_answer(query=query, context=context, history=history)
-        
-        # 返回响应
-        return ChatResponse(answer=answer, sources=sources)
+        # 根据模式决定是否使用RAG检索
+        if mode == "rag":
+            # 从知识库中检索相关文档
+            context, sources = rag_engine.retrieve(
+                query=query,
+                max_sources=request.max_sources,
+                similarity_threshold=request.similarity_threshold
+            )
+            
+            # 生成回答
+            answer = llm.generate_answer(
+                query=query, 
+                context=context, 
+                history=history,
+                mode="rag"
+            )
+            
+            # 返回响应
+            return ChatResponse(answer=answer, sources=sources)
+        else:
+            # 纯对话模式，不使用知识库检索
+            answer = llm.generate_answer(
+                query=query, 
+                context=None, 
+                history=history,
+                mode="chat"
+            )
+            
+            # 返回响应（没有引用源）
+            return ChatResponse(answer=answer, sources=[])
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"处理聊天请求失败: {str(e)}") 

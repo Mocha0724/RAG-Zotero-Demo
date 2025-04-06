@@ -39,7 +39,13 @@
                 <!-- 欢迎消息 -->
                 <div class="message assistant-message mb-4">
                     <div class="message-content rounded-lg p-3 bg-blue-50">
-                        <p>👋 欢迎使用基于Zotero文献库的RAG系统！我可以帮您查找和回答与您知识库相关的问题。请输入您的问题。</p>
+                        <p>👋 欢迎使用Zotero文献助手！</p>
+                        <p class="mt-2">我可以帮您查找和回答与您知识库相关的问题，也可以作为普通助手与您交流。</p>
+                        <p class="mt-2">您可以使用右下角的开关在<strong>知识库查询模式</strong>和<strong>纯对话模式</strong>之间切换：</p>
+                        <ul class="list-disc ml-6 mt-1">
+                            <li><strong>知识库查询模式</strong>：我将从您的Zotero文献库中检索相关内容回答问题</li>
+                            <li><strong>纯对话模式</strong>：我将作为普通AI助手与您交流，不查询知识库</li>
+                        </ul>
                     </div>
                 </div>
                 <!-- 对话消息将动态添加到这里 -->
@@ -54,9 +60,18 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <button id="send-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-                    <i class="fas fa-paper-plane mr-1"></i>发送
-                </button>
+                <div class="flex flex-col space-y-2">
+                    <button id="send-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
+                        <i class="fas fa-paper-plane mr-1"></i>发送
+                    </button>
+                    <div class="flex items-center justify-center border border-gray-300 rounded-lg px-2 py-1 bg-white">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="mode-toggle" class="sr-only peer" checked>
+                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span class="ml-2 text-xs text-gray-700 whitespace-nowrap" id="mode-label">使用知识库</span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 

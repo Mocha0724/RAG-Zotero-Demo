@@ -7,7 +7,8 @@ const API_BASE_URL = 'http://localhost:8000/api';
 let chatHistory = [];
 let settings = {
     maxSources: 5,
-    similarityThreshold: 0.6
+    similarityThreshold: 0.6,
+    mode: 'rag' // 默认使用知识库模式
 };
 
 // 初始化Markdown解析器
@@ -30,6 +31,8 @@ const modalCloseButtons = document.querySelectorAll('.modal-close');
 const saveSettingsButton = document.getElementById('save-settings');
 const similarityThreshold = document.getElementById('similarity-threshold');
 const thresholdValue = document.getElementById('threshold-value');
+const modeToggle = document.getElementById('mode-toggle');
+const modeLabel = document.getElementById('mode-label');
 
 // 事件监听器
 document.addEventListener('DOMContentLoaded', () => {
@@ -69,6 +72,22 @@ document.addEventListener('DOMContentLoaded', () => {
         thresholdValue.textContent = similarityThreshold.value;
     });
     
+    // 模式切换事件
+    modeToggle.addEventListener('change', () => {
+        settings.mode = modeToggle.checked ? 'rag' : 'chat';
+        modeLabel.textContent = modeToggle.checked ? '使用知识库' : '纯对话模式';
+        
+        // 保存设置
+        localStorage.setItem('chatSettings', JSON.stringify(settings));
+        
+        // 添加系统消息提示模式切换
+        const modeMessage = modeToggle.checked 
+            ? '已切换到知识库查询模式，我将使用您的文献库回答问题。' 
+            : '已切换到纯对话模式，我将作为一般AI助手与您交流，不查询知识库。';
+        
+        addSystemMessage(modeMessage);
+    });
+    
     // 加载设置
     loadSettings();
 });
@@ -103,7 +122,8 @@ function sendMessage() {
             query: query,
             history: chatHistory,
             max_sources: settings.maxSources,
-            similarity_threshold: settings.similarityThreshold
+            similarity_threshold: settings.similarityThreshold,
+            mode: settings.mode
         })
     })
     .then(response => {
@@ -375,19 +395,34 @@ function showSettingsModal() {
 }
 
 /**
+ * 添加系统消息到聊天区域
+ * @param {string} content - 消息内容
+ */
+function addSystemMessage(content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message system-message mb-4';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content rounded-lg p-3 bg-gray-200 text-center';
+    contentDiv.textContent = content;
+    
+    messageDiv.appendChild(contentDiv);
+    chatContainer.appendChild(messageDiv);
+    
+    // 滚动到底部
+    scrollToBottom();
+}
+
+/**
  * 保存设置
  */
 function saveSettings() {
-    const maxSources = parseInt(document.getElementById('max-sources').value);
-    const similarityThreshold = parseFloat(document.getElementById('similarity-threshold').value);
+    // 获取设置值
+    settings.maxSources = parseInt(document.getElementById('max-sources').value);
+    settings.similarityThreshold = parseFloat(document.getElementById('similarity-threshold').value);
     
-    settings = {
-        maxSources: maxSources,
-        similarityThreshold: similarityThreshold
-    };
-    
-    // 保存到本地存储
-    localStorage.setItem('ragDemoSettings', JSON.stringify(settings));
+    // 保存设置
+    localStorage.setItem('chatSettings', JSON.stringify(settings));
     
     // 关闭模态框
     settingsModal.classList.add('hidden');
@@ -397,8 +432,19 @@ function saveSettings() {
  * 加载设置
  */
 function loadSettings() {
-    const savedSettings = localStorage.getItem('ragDemoSettings');
+    // 从本地存储加载设置
+    const savedSettings = localStorage.getItem('chatSettings');
     if (savedSettings) {
-        settings = JSON.parse(savedSettings);
+        const parsed = JSON.parse(savedSettings);
+        settings = {...settings, ...parsed};
+        
+        // 更新UI
+        document.getElementById('max-sources').value = settings.maxSources;
+        document.getElementById('similarity-threshold').value = settings.similarityThreshold;
+        document.getElementById('threshold-value').textContent = settings.similarityThreshold;
+        
+        // 设置模式开关
+        modeToggle.checked = settings.mode === 'rag';
+        modeLabel.textContent = modeToggle.checked ? '使用知识库' : '纯对话模式';
     }
 } 
